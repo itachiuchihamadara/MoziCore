@@ -64,6 +64,15 @@ for i in range(20):
 
     ax.scatter(start_x, start_y, z(start_x, start_y), color='red', s=100, label='Starting point')
 
+for i in range(100):
+    grad_x = dz_dx(start_x, start_y)
+    grad_y = dz_dy(start_x, start_y)
+
+    start_x = start_x - 0.2 * grad_x;
+    start_y = start_y - 0.2 * grad_y;
+
+    ax.scatter(start_x, start_y, z(start_x, start_y), color='red', s=100, label='Starting point')
+
 print(start_x, start_y)
 plt.show()
 plt.tight_layout()
