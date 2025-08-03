@@ -46,7 +46,7 @@ ax.quiver(start_x, start_y, start_z, -grad_x, -grad_y, 0,
 
 
 
-beta = 0.1
+beta = 0.5
 momentum_x = 0
 momentum_y = 0
 ax.scatter(start_x, start_y, z(start_x, start_y), color='red', s=100, label='Starting point')
@@ -54,25 +54,29 @@ for i in range(20):
     grad_x = dz_dx(start_x, start_y)
     grad_y = dz_dy(start_x, start_y)
 
-    momentum_x = (1-beta) * momentum_x + beta * (grad_x)
+    momentum_x = (1-beta) * momentum_x + beta * grad_x
     print(start_x, start_y)
 
-    start_x = start_x - 0.2 * momentum_x;
+    start_x = start_x - 2 * momentum_x
 
-    momentum_y = (1-beta) * momentum_y + beta * (grad_y)
-    start_y = start_y - 0.2 * momentum_y;
+    momentum_y = (1-beta) * momentum_y + beta * grad_y
+    start_y = start_y - 2 * momentum_y
 
+    print(start_x, start_y)
     ax.scatter(start_x, start_y, z(start_x, start_y), color='red', s=100, label='Starting point')
 
-for i in range(100):
-    grad_x = dz_dx(start_x, start_y)
-    grad_y = dz_dy(start_x, start_y)
+# for i in range(100):
+#     grad_x = dz_dx(start_x, start_y)
+#     grad_y = dz_dy(start_x, start_y)
+#
+#     start_x = start_x - 2 * grad_x
+#     start_y = start_y - 2 * grad_y
+#
+#     print(start_x, start_y)
+#
+#     ax.scatter(start_x, start_y, z(start_x, start_y), color='red', s=100, label='Starting point')
 
-    start_x = start_x - 0.2 * grad_x;
-    start_y = start_y - 0.2 * grad_y;
+ax.scatter(start_x, start_y, z(start_x, start_y), color='black', s=1000, label='Starting point')
 
-    ax.scatter(start_x, start_y, z(start_x, start_y), color='red', s=100, label='Starting point')
-
-print(start_x, start_y)
 plt.show()
 plt.tight_layout()
