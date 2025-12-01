@@ -67,26 +67,50 @@ class MultiHeadAttention(nn.Module):
 
         return context_vec
 
+class CrossAttention(nn.Module):
+    def __init__(self, d_in, d_out, dropout, num_heads, qkv_bias=False):
+        super().__init__()
+        assert (d_out % num_heads == 0), \
+            "d_out must be divisible by num_heads"
 
-# inputs = torch.tensor(
-#   [[0.43, 0.15, 0.89], # Your     (x^1)
-#    [0.55, 0.87, 0.66], # journey  (x^2)
-#    [0.57, 0.85, 0.64], # starts   (x^3)
-#    [0.22, 0.58, 0.33], # with     (x^4)
-#    [0.77, 0.25, 0.10], # one      (x^5)
-#    [0.05, 0.80, 0.55]] # step     (x^6)
-# )
-#
-# batch = torch.stack((inputs, inputs), dim=0)
-# print(batch.shape)
-#
-# torch.manual_seed(123)
-#
-# batch_size, context_length, d_in = batch.shape
-# d_out = 3
-# mha = MultiHeadAttention(d_in, d_out, context_length, 0.0, num_heads=3)
-#
-# context_vecs = mha(batch)
-#
-# print(context_vecs)
-# print("context_vecs.shape:", context_vecs.shape)
+        self.d_out = d_out
+        self.num_heads = num_heads
+        self.head_dim = d_out // num_heads
+
+        # Queries from decoder input X (SQL)
+        self.W_query = nn.Linear(d_in, d_out, bias=qkv_bias)
+
+        # Keys and values from encoder output Y (English)
+        self.W_key = nn.Linear(d_in, d_out, bias=qkv_bias)
+        self.W_value = nn.Linear(d_in, d_out, bias=qkv_bias)
+
+        self.out_proj = nn.Linear(d_out, d_out)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x, y):
+        # x: (B, sql_tokens, dim)
+        # y: (B, english_tokens, dim)
+        B, sql_t, _ = x.shape
+        B, eng_t, _ = y.shape
+
+        Q = self.W_query(x)
+        K = self.W_key(y)
+        V = self.W_value(y)
+
+        # Split for multi-heads
+        Q = Q.view(B, sql_t, self.num_heads, self.head_dim).transpose(1, 2)
+        K = K.view(B, eng_t, self.num_heads, self.head_dim).transpose(1, 2)
+        V = V.view(B, eng_t, self.num_heads, self.head_dim).transpose(1, 2)
+
+        # Attention: Q x Kᵀ
+        attn_scores = (Q @ K.transpose(2, 3)) / (self.head_dim ** 0.5)
+
+        attn_weights = torch.softmax(attn_scores, dim=-1)
+        attn_weights = self.dropout(attn_weights)
+
+        # Weighted sum: A x V
+        context = (attn_weights @ V).transpose(1, 2)
+        context = context.contiguous().view(B, sql_t, self.d_out)
+
+        # Final projection
+        return self.out_proj(context)

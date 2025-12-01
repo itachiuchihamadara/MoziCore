@@ -43,7 +43,8 @@ GPT_CONFIG_124M = {
     "n_heads": 2,
     "n_layers": 12,
     "drop_rate": 0.1,
-    "qkv_bias": False
+    "qkv_bias": False,
+    "encode_context_length" : 1028
 }
 
 
